@@ -1,5 +1,0 @@
-
-crewai
-redis
-requests
-
