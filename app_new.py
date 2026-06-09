@@ -33,8 +33,18 @@ except Exception:
         def iframe(src="", **k):
             return f"<iframe src='{src}'></iframe>"
 
-    mo = type("M", (), {"state": lambda v=None: _State(v), "ui": _UI(), "run": lambda ui, **kw: print("Marimo stub run")})
+    from types import SimpleNamespace
     from typing import Any, cast
+
+    _ui = _UI()
+
+    def _state_fn(v=None):
+        return _State(v)
+
+    def _run(ui, **kw):
+        print("Marimo stub run")
+
+    mo = SimpleNamespace(state=_state_fn, ui=_ui, run=_run)
     mo = cast(Any, mo)
 
 # Ensure static type checkers treat `mo` as dynamic/Any regardless of import path
