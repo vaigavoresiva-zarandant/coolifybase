@@ -69,6 +69,17 @@ test('dev_helper_version accepts valid docker tag formats', function () {
     }
 });
 
+test('nvidia_nim_api_key can be saved in instance settings', function () {
+    $key = 'nim-key-abc123';
+
+    Livewire::test(Index::class)
+        ->set('nvidia_nim_api_key', $key)
+        ->call('instantSave')
+        ->assertHasNoErrors(['nvidia_nim_api_key']);
+
+    expect(InstanceSettings::find(0)->fresh()->nvidia_nim_api_key)->toBe($key);
+});
+
 test('buildHelperImage refuses when non-dev environment', function () {
     config(['app.env' => 'production']);
 

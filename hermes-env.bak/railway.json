@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "hermes-framework": {
+      "build": { "dockerfile": "Dockerfile.hermes" },
+      "environment": {
+        "NVIDIA_NIM_API_KEY": "${NVIDIA_NIM_API_KEY}"
+      },
+      "volumes": [{ "source": "hermes_storage", "destination": "/app/hermes_storage" }]
+    }
+  }
+}

@@ -25,6 +25,9 @@
                                 placeholder="https://coolify.yourdomain.com" />
                             <x-forms.input canGate="update" :canResource="$settings" id="instance_name" label="Name" placeholder="Coolify"
                                 helper="Custom name for your Coolify instance, shown in the URL." />
+                            <x-forms.input canGate="update" :canResource="$settings" id="nvidia_nim_api_key" type="password" label="Nvidia NIM API Key"
+                                helper="Store your Nvidia NIM API key securely. This value is encrypted at rest and available for Hermes when it is configured in the environment."
+                                placeholder="••••••••••••••••••" autocomplete="new-password" />
                             <div class="w-full" x-data="{
                             open: false,
                             search: '{{ $settings->instance_timezone ?: '' }}',
