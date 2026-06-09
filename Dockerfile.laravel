@@ -1,0 +1,40 @@
+## Stage 1: Node builder for frontend assets
+FROM node:22-bookworm-slim AS node_builder
+WORKDIR /src
+COPY package.json package-lock.json vite.config.js ./
+COPY resources ./resources
+COPY public ./public
+RUN npm ci && npm run build
+
+## Stage 2: PHP runtime
+FROM dunglas/frankenphp:php8.4.22-bookworm
+
+# Install system deps and PHP extensions required by Composer packages
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libzip-dev zip zlib1g-dev libssl-dev libxml2-dev git unzip curl \
+        libonig-dev libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev pkg-config && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
+    docker-php-ext-install -j$(nproc) gd zip sockets pcntl mbstring pdo pdo_mysql xml && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Composer binary from official image
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+# Copy built assets from node stage
+COPY --from=node_builder /src/public/build ./public/build
+# Copy rest of the app
+COPY . .
+
+# Install PHP dependencies (non-interactive)
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
+
+# Expose typical app port
+EXPOSE 8000
+
+# Healthcheck for Railway
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s CMD curl -f http://localhost:8000/ || exit 1
+
+# Default start command — override in Railway if you prefer frankenphp direct config
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
