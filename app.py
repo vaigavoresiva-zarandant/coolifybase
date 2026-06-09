@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import time
+from typing import Any, cast
 
 # Ensure the local Marimo package in marimo-env is importable when running from
 # the monorepo root.
@@ -40,7 +41,7 @@ SERVICES = [
     },
 ]
 
-SELECTED = mo.state(None)
+SELECTED = cast(mo.State[dict], mo.state(None))
 LOG_LINES = mo.state([])
 STREAM_RUNNING = mo.state(False)
 
@@ -81,7 +82,7 @@ def select_service(host: str, port: int) -> None:
     SELECTED.set({"host": host, "port": port})
 
 
-def render_service_card(service: dict) -> mo.ui.div:
+def render_service_card(service: dict) -> Any:
     active = SELECTED.value and SELECTED.value.get("host") == service["host"]
     return mo.ui.div(
         mo.ui.h1(service["name"], style={"color": COLOR_TEXT, "margin": "0 0 8px 0"}),
@@ -119,7 +120,7 @@ def render_service_card(service: dict) -> mo.ui.div:
     )
 
 
-def build_ui() -> mo.ui.div:
+def build_ui() -> Any:
     start_valkey_log_stream()
 
     header = mo.ui.div(
