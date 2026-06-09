@@ -1,37 +1,57 @@
+version: '3.8'
+
 services:
-    coolify:
-        container_name: coolify
-        restart: always
-        working_dir: /var/www/html
-        extra_hosts:
-            - host.docker.internal:host-gateway
-        networks:
-            - coolify
-        depends_on:
-            - postgres
-            - redis
-            - soketi
-    postgres:
-        image: postgres:15-alpine
-        container_name: coolify-db
-        restart: always
-        networks:
-            - coolify
-    redis:
-        image: redis:7-alpine
-        container_name: coolify-redis
-        restart: always
-        networks:
-            - coolify
-    soketi:
-        container_name: coolify-realtime
-        extra_hosts:
-            - host.docker.internal:host-gateway
-        restart: always
-        networks:
-            - coolify
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    container_name: pb_core
+    volumes:
+      - pb_data:/app/pb_data
+    networks:
+      - csp-core-network
+
+  valkey:
+    image: valkey/valkey:7.2
+    container_name: valkey_core
+    volumes:
+      - valkey_data:/app/valkey_data
+    networks:
+      - csp-core-network
+
+  hermes-framework:
+    build:
+      context: ./hermes-env
+      dockerfile: Dockerfile.hermes
+    container_name: hermes_core
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://valkey:6379/0
+    volumes:
+      - hermes_storage:/app/hermes_storage
+    networks:
+      - csp-core-network
+    depends_on:
+      - valkey
+      - pocketbase
+
+  frontend-maestro:
+    build:
+      context: .
+      dockerfile: Dockerfile.marimo
+    container_name: marimo_core
+    ports:
+      - "2718:2718"
+    networks:
+      - csp-core-network
+    depends_on:
+      - valkey
+      - pocketbase
+      - hermes-framework
+
+volumes:
+  pb_data:
+  valkey_data:
+  hermes_storage:
+
 networks:
-    coolify:
-        name: coolify
-        driver: bridge
-        external: false
+  csp-core-network:
+    driver: bridge

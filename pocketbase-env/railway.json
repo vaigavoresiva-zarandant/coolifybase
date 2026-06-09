@@ -1,0 +1,9 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "pocketbase": {
+      "source": "ghcr.io/muchobien/pocketbase:latest",
+      "volumes": [{ "source": "pb_data", "destination": "/app/pb_data" }]
+    }
+  }
+}
