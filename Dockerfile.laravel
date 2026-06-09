@@ -7,7 +7,7 @@ COPY public ./public
 RUN npm ci && npm run build
 
 ## Stage 2: PHP runtime
-FROM php:8.4-cli
+FROM dunglas/frankenphp:php8.4.22-bookworm
 
 # Install system deps and PHP extensions required by Composer packages
 RUN apt-get update && \
@@ -32,4 +32,9 @@ RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
 # Expose typical app port
 EXPOSE 8000
+
+# Healthcheck for Railway
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s CMD curl -f http://localhost:8000/ || exit 1
+
+# Default start command — override in Railway if you prefer frankenphp direct config
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
