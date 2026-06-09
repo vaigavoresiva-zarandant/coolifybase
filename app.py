@@ -1,6 +1,16 @@
-import marimo as mo
+import os
+import sys
 import threading
 import time
+
+# Ensure the local Marimo package in marimo-env is importable when running from
+# the monorepo root.
+ROOT_DIR = os.path.dirname(__file__)
+LOCAL_MARIMO_PATH = os.path.join(ROOT_DIR, "marimo-env")
+if LOCAL_MARIMO_PATH not in sys.path:
+    sys.path.insert(0, LOCAL_MARIMO_PATH)
+
+import marimo as mo
 
 COLOR_BACKGROUND = "#12131C"
 COLOR_SURFACE = "#1A1B26"
