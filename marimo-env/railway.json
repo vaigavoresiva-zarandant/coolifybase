@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "marimo": {
+      "build": { "dockerfile": "docker/Dockerfile" },
+      "env": {
+        "NVIDIA_NIM_API_KEY": ""
+      }
+    }
+  }
+}
