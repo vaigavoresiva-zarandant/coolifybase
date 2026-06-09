@@ -6,12 +6,7 @@
       "env": {
         "NVIDIA_NIM_API_KEY": ""
       }
-    }
-  }
-}
-{
-  "$schema": "https://railway.app/railway.schema.json",
-  "services": {
+    },
     "hermes-framework": {
       "build": { "dockerfile": "Dockerfile.hermes" },
       "environment": {
