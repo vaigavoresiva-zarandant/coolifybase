@@ -1,6 +1,10 @@
 """
 CoolAppAI Marimo frontend — UI reactiva siguiendo la guía de estilo.
 """
+from typing import Any
+
+# Let static checkers treat `mo` as dynamic; actual value set below.
+mo: Any
 try:
     import marimo as mo
 except Exception:
@@ -30,6 +34,12 @@ except Exception:
             return f"<iframe src='{src}'></iframe>"
 
     mo = type("M", (), {"state": lambda v=None: _State(v), "ui": _UI(), "run": lambda ui, **kw: print("Marimo stub run")})
+    from typing import Any, cast
+    mo = cast(Any, mo)
+
+# Ensure static type checkers treat `mo` as dynamic/Any regardless of import path
+from typing import Any, cast as _cast
+mo = _cast(Any, mo)
 
 SELECTED = mo.state(None)
 
