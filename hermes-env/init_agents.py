@@ -120,7 +120,7 @@ class Orquestador:
             self.dev.preparar_repositorio(repo)
 
             # 2) Solicitar diseño UI
-            ui_meta = self.ui.disenar_ui({"service": service_name, "port": data.get("port", 8000)})
+            _ = self.ui.disenar_ui({"service": service_name, "port": data.get("port", 8000)})
 
             # 3) Escribir railway.json en subcarpeta del repo clonado
             local_name = repo.rstrip("/\n").split("/")[-1].replace(".git", "")
