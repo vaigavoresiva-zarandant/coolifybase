@@ -1,3 +1,57 @@
+version: '3.8'
+networks:
+  csp-core-network:
+    name: csp-core-network
+    driver: bridge
+
+volumes:
+  pb_data:
+  valkey_data:
+  hermes_storage:
+
+services:
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    container_name: pb_core
+    volumes:
+      - pb_data:/app/pb_data
+    networks:
+      - csp-core-network
+
+  valkey:
+    image: valkey/valkey:7.2
+    container_name: valkey_core
+    volumes:
+      - valkey_data:/app/valkey_data
+    networks:
+      - csp-core-network
+
+  hermes-framework:
+    build:
+      context: ./hermes-env
+      dockerfile: Dockerfile.hermes
+    container_name: hermes_core
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    volumes:
+      - hermes_storage:/app/hermes_storage
+    networks:
+      - csp-core-network
+    depends_on:
+      - valkey
+      - pocketbase
+
+  frontend-maestro:
+    build:
+      context: .
+      dockerfile: Dockerfile.marimo
+    container_name: marimo_core
+    ports:
+      - "2718:2718"
+    networks:
+      - csp-core-network
+    depends_on:
+      - valkey
 services:
     coolify:
         container_name: coolify

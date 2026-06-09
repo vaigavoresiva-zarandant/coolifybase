@@ -1,0 +1,9 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "hermes-framework": {
+      "build": { "dockerfile": "Dockerfile.hermes" },
+      "volumes": [{ "source": "hermes_storage", "destination": "/app/hermes_storage" }]
+    }
+  }
+}
