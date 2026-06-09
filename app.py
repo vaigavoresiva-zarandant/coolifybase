@@ -20,28 +20,6 @@ except Exception:
         @staticmethod
         def h1(t, **k):
             return ""
-"""
-CoolAppAI Marimo frontend — UI reactiva siguiendo la guía de estilo.
-"""
-try:
-    import marimo as mo
-except Exception:
-    # Stub mínimo para edición y pruebas fuera del entorno Marimo
-    class _State:
-        def __init__(self, v=None):
-            self.value = v
-
-        def set(self, v):
-            self.value = v
-
-    class _UI:
-        @staticmethod
-        def div(*a, **k):
-            return ""
-
-        @staticmethod
-        def h1(t, **k):
-            return ""
 
         @staticmethod
         def button(t, **k):
