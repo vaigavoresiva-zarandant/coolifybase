@@ -26,6 +26,9 @@ class Index extends Component
     #[Validate('nullable|string|max:255')]
     public ?string $instance_name = null;
 
+    #[Validate('nullable|string|max:255')]
+    public ?string $nvidia_nim_api_key = null;
+
     #[Validate('nullable|ipv4')]
     public ?string $public_ipv4 = null;
 
@@ -70,6 +73,7 @@ class Index extends Component
         $this->public_port_min = $this->settings->public_port_min;
         $this->public_port_max = $this->settings->public_port_max;
         $this->instance_name = $this->settings->instance_name;
+        $this->nvidia_nim_api_key = $this->settings->nvidia_nim_api_key;
         $this->public_ipv4 = $this->settings->public_ipv4;
         $this->public_ipv6 = $this->settings->public_ipv6;
         $this->instance_timezone = $this->settings->instance_timezone;
@@ -92,6 +96,7 @@ class Index extends Component
         $this->settings->public_port_min = $this->public_port_min;
         $this->settings->public_port_max = $this->public_port_max;
         $this->settings->instance_name = $this->instance_name;
+        $this->settings->nvidia_nim_api_key = $this->nvidia_nim_api_key;
         $this->settings->public_ipv4 = $this->public_ipv4;
         $this->settings->public_ipv6 = $this->public_ipv6;
         $this->settings->instance_timezone = $this->instance_timezone;

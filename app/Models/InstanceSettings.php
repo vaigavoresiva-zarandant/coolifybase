@@ -31,6 +31,7 @@ class InstanceSettings extends Model
         'smtp_timeout',
         'resend_enabled',
         'resend_api_key',
+        'nvidia_nim_api_key',
         'is_dns_validation_enabled',
         'custom_dns_servers',
         'instance_name',
@@ -61,6 +62,7 @@ class InstanceSettings extends Model
 
         'resend_enabled' => 'boolean',
         'resend_api_key' => 'encrypted',
+        'nvidia_nim_api_key' => 'encrypted',
 
         'allowed_ip_ranges' => 'array',
         'is_auto_update_enabled' => 'boolean',

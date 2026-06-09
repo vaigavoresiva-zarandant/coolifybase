@@ -406,6 +406,7 @@ CREATE TABLE IF NOT EXISTS "instance_settings" (
     "smtp_timeout" INTEGER,
     "resend_enabled" INTEGER DEFAULT false NOT NULL,
     "resend_api_key" TEXT,
+    "nvidia_nim_api_key" TEXT,
     "is_dns_validation_enabled" INTEGER DEFAULT true NOT NULL,
     "custom_dns_servers" TEXT DEFAULT '1.1.1.1',
     "instance_name" TEXT,

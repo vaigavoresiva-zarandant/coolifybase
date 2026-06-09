@@ -25,6 +25,7 @@ services:
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - REDIS_URL=redis://valkey:6379/0
+      - NVIDIA_NIM_API_KEY=${NVIDIA_NIM_API_KEY}
     volumes:
       - hermes_storage:/app/hermes_storage
     networks:
