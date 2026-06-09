@@ -1,191 +1,231 @@
-"""
-CoolAppAI Marimo frontend — UI reactiva siguiendo la guía de estilo.
-"""
-try:
-    import marimo as mo
-except Exception:
-    # Stub mínimo para edición y pruebas fuera del entorno Marimo
-    class _State:
-        def __init__(self, v=None):
-            self.value = v
+import marimo as mo
+import threading
+import time
 
-        def set(self, v):
-            self.value = v
-
-    class _UI:
-        @staticmethod
-        def div(*a, **k):
-            return ""
-
-        @staticmethod
-        def h1(t, **k):
-            return ""
-
-        @staticmethod
-        def button(t, **k):
-            return ""
-
-        @staticmethod
-        def iframe(src="", **k):
-            return f"<iframe src='{src}'></iframe>"
-
-    mo = type(
-        "M",
-        (),
-        {
-            "state": lambda v=None: _State(v),
-            "ui": _UI(),
-            "run": lambda ui, **kw: print("Marimo stub run"),
-        },
-    )
-
-SELECTED = mo.state(None)
+COLOR_BACKGROUND = "#12131C"
+COLOR_SURFACE = "#1A1B26"
+COLOR_ACCENT = "#00FF66"
+COLOR_TEXT = "#FFFFFF"
+COLOR_SECONDARY = "#A9B2C3"
+COLOR_BORDER = "#222428"
 
 SERVICES = [
-    {"name": "PocketBase", "alias": "pocketbase", "port": 8090},
-    {"name": "Valkey", "alias": "valkey", "port": 8080},
-    {"name": "Hermes Framework", "alias": "hermes-framework", "port": 8000},
+    {
+        "name": "PocketBase",
+        "host": "pocketbase",
+        "port": 8090,
+        "description": "Vault de estado, credenciales cifradas y tokens GitHub.",
+    },
+    {
+        "name": "Valkey",
+        "host": "valkey",
+        "port": 8080,
+        "description": "Broker de memoria central para colas y flujo de mensajes.",
+    },
+    {
+        "name": "Hermes Framework",
+        "host": "hermes-framework",
+        "port": 8000,
+        "description": "Motor cognitivo de agentes y orquestación CrewAI.",
+    },
 ]
 
-
-def select_service(alias: str, port: int):
-    # Guardar como alias:port
-    SELECTED.set(f"{alias}:{port}")
-
-
-def render_service_card(svc):
-    # Estilos siguiendo la guía (fondo antracita, acento verde al seleccionar)
-    is_active = False
-    if SELECTED.value and isinstance(SELECTED.value, str):
-        is_active = SELECTED.value.startswith(svc["alias"] + ":")
-
-    border = "1px solid #222428"
-    if is_active:
-        border = "2px solid #00FF66"
-
-    return mo.ui.div(
-        mo.ui.h1(svc["name"], style={"color": "#FFFFFF"}),
-        mo.ui.button("Abrir", _onclick=lambda: select_service(svc["alias"], svc["port"])),
-        style={
-            "background": "#1A1B26",
-            "border": border,
-            "padding": "12px",
-            "borderRadius": "8px",
-            "width": "220px",
-            "margin": "8px",
-        },
-    )
+SELECTED = mo.state(None)
+LOG_LINES = mo.state([])
+STREAM_RUNNING = mo.state(False)
 
 
-def mock_log_stream(callback):
-    # Simula un flujo de logs; en producción esto consumiría mensajes de Valkey/Redis
-    import threading
-    import time
+def append_log(message: str) -> None:
+    current = LOG_LINES.value or []
+    current = current[-50:]
+    current.append(message)
+    LOG_LINES.set(current)
 
-    def worker():
-        i = 0
+
+def start_valkey_log_stream() -> None:
+    if STREAM_RUNNING.value:
+        return
+
+    STREAM_RUNNING.set(True)
+
+    def worker() -> None:
+        counter = 0
         while True:
-            i += 1
-            msg = f"[valkey] queue-status: pending={i % 5} running={(i % 3)}"
-            callback(msg)
+            counter += 1
+            payload = {
+                "event": "cola_orquestador_maestro",
+                "pending": counter % 5,
+                "running": counter % 3,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+            }
+            append_log(
+                f"[valkey] {payload['timestamp']} - pending={payload['pending']} running={payload['running']}"
+            )
             time.sleep(3)
 
-    t = threading.Thread(target=worker, daemon=True)
-    t.start()
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
 
 
-def build_ui():
-    font_family = (
-        "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
-    )
-    mono_family = "ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace"
+def select_service(host: str, port: int) -> None:
+    SELECTED.set({"host": host, "port": port})
 
-    header = mo.ui.div(
-        mo.ui.h1(
-            "CoolAppAI",
+
+def render_service_card(service: dict) -> mo.ui.div:
+    active = SELECTED.value and SELECTED.value.get("host") == service["host"]
+    return mo.ui.div(
+        mo.ui.h1(service["name"], style={"color": COLOR_TEXT, "margin": "0 0 8px 0"}),
+        mo.ui.div(
+            service["description"],
             style={
-                "fontFamily": font_family,
-                "color": "#FFFFFF",
-                "margin": "0",
+                "color": COLOR_SECONDARY,
+                "fontSize": "13px",
+                "marginBottom": "12px",
+            },
+        ),
+        mo.ui.button(
+            "Abrir",
+            _onclick=lambda: select_service(service["host"], service["port"]),
+            style={
+                "background": COLOR_ACCENT,
+                "color": COLOR_BACKGROUND,
+                "border": "none",
+                "padding": "10px 14px",
+                "borderRadius": "999px",
+                "cursor": "pointer",
             },
         ),
         style={
-            "background": "#12131C",
-            "padding": "18px 24px",
-            "borderBottom": "1px solid #17171C",
+            "background": COLOR_SURFACE,
+            "border": (
+                f"2px solid {COLOR_ACCENT}" if active else f"1px solid {COLOR_BORDER}"
+            ),
+            "borderRadius": "18px",
+            "padding": "18px",
+            "marginBottom": "14px",
+            "width": "100%",
+            "boxSizing": "border-box",
         },
     )
 
-    # Left sidebar with services and clusters
-    service_cards = [render_service_card(s) for s in SERVICES]
-    clusters = [
-        "CSP (Coolify Studio Production)",
-        "CSStaging (Coolify Studio Staging)",
-        "CAP (Coolify Agent Production)",
-        "CAS (Coolify Agent Staging)",
-    ]
-    cluster_items = [
-        mo.ui.div(c, style={"color": "#A9B2C3", "marginBottom": "6px"}) for c in clusters
-    ]
-    cluster_list = mo.ui.div(*cluster_items, style={"marginTop": "12px"})
+
+def build_ui() -> mo.ui.div:
+    start_valkey_log_stream()
+
+    header = mo.ui.div(
+        mo.ui.h1(
+            "CoolAppAI", style={"color": COLOR_TEXT, "margin": "0", "fontSize": "30px"}
+        ),
+        mo.ui.div(
+            "Factoría autónoma multi-servicio dibujada en un Canvas de control.",
+            style={"color": COLOR_SECONDARY, "marginTop": "8px", "lineHeight": "1.6"},
+        ),
+        style={
+            "padding": "24px 32px",
+            "background": COLOR_BACKGROUND,
+            "borderBottom": f"1px solid {COLOR_BORDER}",
+        },
+    )
+
+    service_cards = [render_service_card(service) for service in SERVICES]
+    cluster_summary = mo.ui.div(
+        mo.ui.h1(
+            "Entornos",
+            style={"color": COLOR_ACCENT, "fontSize": "16px", "margin": "0 0 12px 0"},
+        ),
+        *[
+            mo.ui.div(cluster, style={"color": COLOR_SECONDARY, "marginBottom": "8px"})
+            for cluster in [
+                "CSP - Coolify Studio Production",
+                "CSStaging - Coolify Studio Staging",
+                "CAP - Coolify Agent Production",
+                "CAS - Coolify Agent Staging",
+            ]
+        ],
+        style={"padding": "18px", "borderRadius": "18px", "background": COLOR_SURFACE},
+    )
 
     sidebar = mo.ui.div(
-        mo.ui.h1("Infra Core", style={"color": "#00FF66"}),
+        mo.ui.h1(
+            "Canvas de Servicios",
+            style={"color": COLOR_ACCENT, "margin": "0 0 18px 0", "fontSize": "18px"},
+        ),
         *service_cards,
-        mo.ui.h1("Clusters", style={"color": "#00FF66", "marginTop": "12px"}),
-        cluster_list,
-        style={"width": "260px", "padding": "18px", "background": "#12131C", "borderRight": "1px solid #17171C"},
-    )
-
-    # Central area with iframe (reactive to SELECTED)
-    if SELECTED.value:
-        parts = SELECTED.value.split(":")
-        alias = parts[0]
-        port = parts[1] if len(parts) > 1 else "80"
-        iframe_src = f"http://{alias}:{port}"
-        iframe_el = mo.ui.iframe(src=iframe_src, width="100%", height="600px")
-    else:
-        iframe_el = mo.ui.div(
-            "Seleccione un servicio en el panel izquierdo.", style={"color": "#A9B2C3", "padding": "24px"}
-        )
-
-    # Terminal logs (mocked)
-    logs = []
-
-    def append_log(msg):
-        logs.append(msg)
-
-    mock_log_stream(append_log)
-
-    log_block = mo.ui.div(
-        "\n".join(logs),
+        cluster_summary,
         style={
-            "fontFamily": mono_family,
-            "color": "#A9B2C3",
-            "padding": "12px",
-            "background": "#0F1014",
-            "height": "120px",
-            "overflow": "auto",
+            "width": "280px",
+            "padding": "24px",
+            "background": COLOR_BACKGROUND,
+            "borderRight": f"1px solid {COLOR_BORDER}",
         },
     )
 
-    log_view = mo.ui.div(mo.ui.h1("Logs", style={"color": "#FFFFFF"}), log_block)
+    if SELECTED.value:
+        selected = SELECTED.value
+        iframe_src = f"http://{selected['host']}:{selected['port']}"
+        iframe_card = mo.ui.div(
+            mo.ui.h1(
+                f"{selected['host']}",
+                style={"color": COLOR_TEXT, "margin": "0 0 12px 0"},
+            ),
+            mo.ui.div(
+                f"Navegando en el host privado interno: {iframe_src}",
+                style={"color": COLOR_SECONDARY, "marginBottom": "16px"},
+            ),
+            mo.ui.iframe(
+                src=iframe_src,
+                width="100%",
+                height="620px",
+                style={"border": f"1px solid {COLOR_BORDER}", "borderRadius": "16px"},
+            ),
+        )
+    else:
+        iframe_card = mo.ui.div(
+            "Seleccione un servicio para abrir su panel interno.",
+            style={"color": COLOR_SECONDARY, "padding": "32px", "textAlign": "center"},
+        )
 
-    main_area = mo.ui.div(iframe_el, log_view, style={"flex": "1", "padding": "18px"})
-
-    layout = mo.ui.div(
-        header,
-        mo.ui.div(sidebar, main_area, style={"display": "flex", "minHeight": "calc(100vh - 72px)"}),
-        style={"background": "#12131C", "minHeight": "100vh"},
+    logs = LOG_LINES.value or []
+    log_panel = mo.ui.div(
+        mo.ui.h1(
+            "Terminal de Valkey", style={"color": COLOR_TEXT, "margin": "0 0 12px 0"}
+        ),
+        mo.ui.div(
+            "\n".join(logs[-12:]),
+            style={
+                "background": "#0F1014",
+                "color": COLOR_SECONDARY,
+                "fontFamily": "ui-monospace, SFMono-Regular, Consolas, monospace",
+                "padding": "16px",
+                "borderRadius": "16px",
+                "whiteSpace": "pre-wrap",
+                "height": "180px",
+                "overflow": "auto",
+            },
+        ),
+        style={"marginTop": "20px"},
     )
 
-    return layout
+    content = mo.ui.div(
+        sidebar,
+        mo.ui.div(
+            iframe_card,
+            log_panel,
+            style={
+                "display": "flex",
+                "flexDirection": "column",
+                "gap": "20px",
+                "flex": "1",
+                "padding": "24px",
+            },
+        ),
+        style={"display": "flex", "minHeight": "calc(100vh - 96px)"},
+    )
+
+    return mo.ui.div(
+        header, content, style={"background": COLOR_BACKGROUND, "minHeight": "100vh"}
+    )
 
 
 if __name__ == "__main__":
-    ui = build_ui()
-    try:
-        mo.run(ui, host="0.0.0.0", port=2718)
-    except Exception:
-        print("Marimo no disponible; UI renderizada estáticamente.")
-        print(ui)
+    mo.run(build_ui(), host="0.0.0.0", port=2718)
