@@ -30,14 +30,14 @@ except Exception:
             return f"<iframe src='{src}'></iframe>"
 
     mo = type(
-    "M",
-    (),
-    {
-        "state": lambda v=None: _State(v),
-        "ui": _UI(),
-        "run": lambda ui, **kw: print("Marimo stub run"),
-    },
-)
+        "M",
+        (),
+        {
+            "state": lambda v=None: _State(v),
+            "ui": _UI(),
+            "run": lambda ui, **kw: print("Marimo stub run"),
+        },
+    )
 
 SELECTED = mo.state(None)
 
